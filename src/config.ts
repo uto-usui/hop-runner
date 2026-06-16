@@ -67,8 +67,8 @@ export const JUICE = {
   hitStopNearMiss: 0.04, // s ニアミス時のスロー（Phase 2 で使用）
   retryLock: 0.25, // s 死亡後の入力ロック（連打事故と GAME OVER の見落とし防止）
   // 死亡後、破片の飛散を見せてから GAME OVER 幕を出すための余韻。
-  deathLinger: 0.55, // s この間は幕を出さず破片を見せる
-  deathOverlayFade: 0.35, // s 余韻のあと幕をこの時間でフェードイン
+  deathLinger: 0.2, // s この間は幕を出さず破片を見せる
+  deathOverlayFade: 0.15, // s 余韻のあと幕をこの時間でフェードイン
 }
 
 // サウンド（WebAudio 手続き生成）。muted で全体オフ。
