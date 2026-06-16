@@ -17,6 +17,7 @@ export function setupTweakPanel() {
     shake: { ...SHAKE },
     audio: { ...AUDIO },
     squash: { ...JUICE.squash },
+    deaths: { deathLinger: JUICE.deathLinger, deathOverlayFade: JUICE.deathOverlayFade },
     theme: { ...THEME },
     parallax: { ...PARALLAX },
     vfx: { ...VFX },
@@ -57,6 +58,8 @@ export function setupTweakPanel() {
   feel.addBinding(JUICE.squash, 'velStretch', { label: '伸び', min: 0, max: 0.001, step: 0.00005 })
   feel.addBinding(JUICE.squash, 'landSquash', { label: '潰れ', min: 0, max: 0.002, step: 0.0001 })
   feel.addBinding(JUICE.squash, 'spring', { label: 'バネ戻り', min: 5, max: 40, step: 1 })
+  feel.addBinding(JUICE, 'deathLinger', { label: '死亡幕の遅延(s)', min: 0, max: 1.5, step: 0.05 })
+  feel.addBinding(JUICE, 'deathOverlayFade', { label: '死亡幕フェード(s)', min: 0.1, max: 1.5, step: 0.05 })
 
   const scene = pane.addFolder({ title: '背景 / 速度', expanded: false })
   scene.addBinding(THEME, 'biomeDist', { label: 'シーン長', min: 1500, max: 12000, step: 500 })
@@ -84,6 +87,7 @@ export function setupTweakPanel() {
     Object.assign(SHAKE, defaults.shake)
     Object.assign(AUDIO, defaults.audio)
     Object.assign(JUICE.squash, defaults.squash)
+    Object.assign(JUICE, defaults.deaths)
     Object.assign(THEME, defaults.theme)
     Object.assign(PARALLAX, defaults.parallax)
     Object.assign(VFX, defaults.vfx)
