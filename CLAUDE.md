@@ -1,0 +1,60 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+Hop Runner は Canvas 2D + TypeScript + Vite 製の、ジャンプ1入力だけのオートランナー。
+ゲーム性・操作・遊びの要素は `README.md` に詳しい。ここでは「コードを触るために必要な構造と不変条件」に絞る。
+
+## コマンド
+
+パッケージマネージャは **pnpm**（`npm`/`yarn` 不可）。
+
+```sh
+pnpm dev        # 開発サーバー (http://localhost:5173)、base は /
+pnpm build      # tsc（型チェック）→ vite build。dist/ へ。base は /hop-runner/
+pnpm preview    # ビルド結果をローカル確認
+pnpm typecheck  # tsc --noEmit（型チェックのみ）
+```
+
+- **テストランナーもリンターも無い。唯一の自動ゲートが `tsc`。** lefthook の pre-commit が、`*.ts` をステージしたコミットで `pnpm typecheck` を走らせる（`tsc` はプロジェクト全体を見るため glob はトリガー判定だけ）。コミット前に手元で `pnpm typecheck` を通すこと。
+- tsconfig は strict + `noUnusedLocals`/`noUnusedParameters`/`noFallthroughCasesInSwitch`。未使用変数・引数も型エラーになる。
+- デプロイは `main` への push で GitHub Pages へ自動（`.github/workflows/deploy.yml`）。`vite.config.ts` が本番ビルドだけ `base` を `/hop-runner/` に切り替えるので、ホスティング先パスを変えるならここ。
+
+## アーキテクチャの要点
+
+### Game が唯一のオーケストレータ、他はほぼ純粋なシミュレーション
+`game.ts`（最大のファイル）が requestAnimationFrame ループ・状態機械・当たり判定・採点の配線・**全描画**を持つ。
+他モジュールは状態を持つが描画しない: `player`（可変ジャンプ物理）/ `world`（地面スクロール＋障害物列）/ `patterns`（障害物形状の生成）/ `score`（スコア・コンボ）/ `collectibles`（オーブ）/ `theme`（配色補間）/ `rng`。`juice/`（`camera`・`particles`・`audio`）は手触り演出。新しい描画は基本 `game.ts` の `draw*` 群に足す。
+
+### 2つの時計（最重要の不変条件）
+ループには通常の `dt` とは別に演出用の時間レイヤーがある。混同すると挙動が壊れる:
+- **`freeze`（死亡ヒットストップ）**: `>0` の間はゲームもパーティクルも止め、`camera.update` と `render` だけ走らせて衝撃を焼き付ける。
+- **`slow`（ニアミスのスロー）**: ゲーム時間 `gameDt` だけ `nearMissSlowFactor` で遅くし、パーティクルとカメラは実時間 `dt` のまま。
+- `dt` は `0.05` でクランプ（タブ離脱対策）。`update(gameDt)` に渡るのはスロー適用後、`particles.update(dt)`/`camera.update(dt)` は実時間、という区別を守る。
+
+### config.ts は「ライブ可変なシングルトン」
+`PHYSICS`/`SPEED`/`OBSTACLE`/`SCORE`/`JUICE` などは **あえて `as const` にしていない可変オブジェクト**。`tweak.ts` の Tweakpane がこのオブジェクトに直接バインドし、`player`/`world` は毎フレーム読むのでスライダーが即反映される。手触り・難易度・演出の調整は基本ここの数字だけで完結する。
+- 値を足したら `tweak.ts` のバインドと「デフォルトに戻す」のスナップショット（`defaults`）にも反映する。
+- `SPEED.start` や `SEED.daily` など一部は「次のラン」から反映（ラン中は `beginRun` で確定するため）。
+- `VIEW`・`GROUND_Y`・`PLAYER` は `as const`（実行中に変えない）。
+
+### 座標系と「描画は当たり判定に影響しない」原則
+内部解像度は固定 `VIEW = 900×300`。CSS で画面幅へスケールする。
+当たり判定は AABB を**実座標**で計算し、見た目より少し小さくして甘めにする（`collides()`）。
+squash & stretch・トレイル・shake・zoom・パララックスは**描画専用**で、当たり判定・採点には絶対に影響させない。描画は `背景(camera外=全面塗りでフレームクリア兼用) → camera(shake/zoom)内で 地面・障害物・オーブ・プレイヤー・パーティクル → ビネット/フラッシュ/浮遊点/HUD(camera外)` の順。HUD やフラッシュを camera 内に入れると揺れて読めなくなる。
+
+### クリア可能エンベロープ（理不尽を出さない不変条件）
+`patterns.ts` は現在の `PHYSICS`/`speed` から「タップジャンプで越えられる最大の高さ・幅」(`maxClearableHeight`/`maxClearableWidth`) を算出し、全 SpawnSpec を `clampSpec` で必ずその範囲に収める。難易度は距離 `p=distance/difficultyRampDist` による重み付き抽選（`TABLE`）でパターン種別が変わるだけで、個々の障害物は常に越えられる。**新しいパターンビルダーを足すときも必ず `clampSpec` を通す。**
+
+### 決定論と乱数
+`rng.ts` は xorshift32。`World` と `Collectibles` がこの Rng を共有シードで初期化し、`SEED.daily` のときは日付文字列 (`seedFromString`) から固定シードを作る＝同じ日は同じ地形。
+**注意:** スピードライン・まばたき等の純演出は `Math.random()` を直接使う。これらはシミュレーション・採点・地形に影響しないので決定論を壊さないが、**地形/オーブ/採点に効く乱数は必ず共有 `Rng` を使う**こと（`Math.random` を混ぜるとデイリーシードが壊れる）。
+
+### 採点まわり
+距離点は倍率込みで積算 (`Scorer.addDistance`)。ニアミスは障害物と水平に重なっている間 `minClear`（プレイヤー下端と障害物上端の最小隙間）を追跡し、通過し終えた瞬間に1回だけ `registerCleared` で採点（`game.ts` の `trackScoring`）。コンボ倍率は**死亡（`reset`）でのみ途切れる**＝攻めて稼ぐ設計。ハイスコア・自己ベスト距離は localStorage (`hop-runner.hiscore` / `hop-runner.bestdist`)。
+
+### 入力は1つだけ（不変）
+`input.ts` はキー/マウス/タッチを区別せず「押した瞬間 (`takePress`)」と「押し続けているか (`holding`)」の2つだけを公開する。可変ジャンプは `holding` を `player.update` に渡して上昇中の重力を弱めることで実現。`M`（ミュート）・`H`（Tweakpane 開閉）はジャンプキーと衝突しないよう別途登録。**操作のシンプルさ（ジャンプ1入力）は変えない。**
+
+### dev フック
+`import.meta.env.DEV` のときだけ `window.game` に Game インスタンスを公開（手動チューニング・デバッグ用）。本番ビルドには出さない。
