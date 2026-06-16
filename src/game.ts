@@ -448,11 +448,27 @@ export class Game {
     ctx.fillStyle = this.state === 'gameover' ? '#c0455b' : PLAYER_COLOR
     this.roundRect(p.x, p.y, p.width, p.height, 8)
     ctx.fill()
-    // 目
-    ctx.fillStyle = '#fff'
-    ctx.beginPath()
-    ctx.arc(p.x + p.width - 12, p.y + 14, 4, 0, Math.PI * 2)
-    ctx.fill()
+
+    // 目（表情つき）。進行方向側に置き、視線で少し上下する
+    const ex = p.x + p.width - 12
+    const ey = p.y + 14 + p.eyeLook * 2
+    if (this.state === 'gameover') {
+      // ✕ の目
+      ctx.strokeStyle = '#fff'
+      ctx.lineWidth = 2
+      ctx.beginPath()
+      ctx.moveTo(ex - 4, ey - 4)
+      ctx.lineTo(ex + 4, ey + 4)
+      ctx.moveTo(ex + 4, ey - 4)
+      ctx.lineTo(ex - 4, ey + 4)
+      ctx.stroke()
+    } else {
+      // 開き具合に応じて縦に潰れる楕円（見開き / 通常 / 細め / まばたき）
+      ctx.fillStyle = '#fff'
+      ctx.beginPath()
+      ctx.ellipse(ex, ey, 4, 4 * p.eyeOpen, 0, 0, Math.PI * 2)
+      ctx.fill()
+    }
     ctx.restore()
   }
 

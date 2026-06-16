@@ -12,7 +12,14 @@ export class Player {
   /** 描画専用の伸縮（squash & stretch）。当たり判定には影響させない */
   scaleX = 1
   scaleY = 1
+  /** 目の開き具合（1=通常, >1=見開き, ~0=まばたき/細め）。描画専用 */
+  eyeOpen = 1
+  /** 視線の上下（-1=上, +1=下）。描画専用 */
+  eyeLook = 0
   private holdTime = 0
+  private blinkTimer = 2.5 // 次のまばたきまでの秒
+  private blinkRemaining = 0 // まばたき継続中の残り秒
+  private squint = 0 // 着地で目を細める残り秒
 
   get width() {
     return PLAYER.width
@@ -29,6 +36,11 @@ export class Player {
     this.landingImpact = 0
     this.scaleX = 1
     this.scaleY = 1
+    this.eyeOpen = 1
+    this.eyeLook = 0
+    this.blinkTimer = 2.5
+    this.blinkRemaining = 0
+    this.squint = 0
     this.holdTime = 0
   }
 
@@ -69,6 +81,38 @@ export class Player {
     }
 
     this.updateSquash(dt)
+    this.updateFace(dt)
+  }
+
+  // 目の表情。上昇で見開き、着地で細め、たまにまばたき、視線は上下に動く（描画専用）。
+  private updateFace(dt: number) {
+    // まばたき
+    if (this.blinkRemaining > 0) {
+      this.blinkRemaining -= dt
+    } else {
+      this.blinkTimer -= dt
+      if (this.blinkTimer <= 0) {
+        this.blinkRemaining = 0.12
+        this.blinkTimer = 2.5 + Math.random() * 3
+      }
+    }
+    // 着地で目を細める
+    if (this.justLanded) this.squint = 0.16
+    else if (this.squint > 0) this.squint = Math.max(0, this.squint - dt)
+
+    // 開き具合の目標（優先: まばたき > 細め > 上昇で見開き > 通常）
+    let targetOpen = 1
+    if (!this.grounded && this.vy < 0) targetOpen = 1.4
+    if (this.squint > 0) targetOpen = 0.5
+    if (this.blinkRemaining > 0) targetOpen = 0.08
+
+    // 視線（上昇=上、落下=やや下、接地=正面）
+    let targetLook = 0
+    if (!this.grounded) targetLook = this.vy < 0 ? -1 : 0.4
+
+    const a = 1 - Math.exp(-30 * dt) // dt 非依存の追従
+    this.eyeOpen += (targetOpen - this.eyeOpen) * a
+    this.eyeLook += (targetLook - this.eyeLook) * a
   }
 
   // 描画用の伸縮。空中では上下速度で伸び、着地で潰れ、毎フレーム元の形へバネ復帰する。
