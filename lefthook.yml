@@ -1,0 +1,7 @@
+# コミット前に型チェックを走らせる。
+# .ts ファイルがステージされたコミットのときだけ実行する（tsc はプロジェクト全体を見る）。
+pre-commit:
+  commands:
+    typecheck:
+      glob: "*.ts"
+      run: pnpm typecheck

@@ -1,0 +1,40 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: #1b1f24;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+#app {
+  width: min(900px, 96vw);
+}
+
+canvas {
+  width: 100%;
+  height: auto;
+  display: block;
+  background: #f4f7fb;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+  touch-action: none;
+}
+
+.hint {
+  margin: 12px 0 0;
+  text-align: center;
+  color: #8a93a0;
+  font-size: 13px;
+  user-select: none;
+}
