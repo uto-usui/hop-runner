@@ -35,6 +35,7 @@ export class Game {
   private retryLock = 0 // >0 の間はリトライ入力を無視
   private flash = 0 // 0..1 のフルスクリーンフラッシュ量
   private flashColor = '#ffffff'
+  private sinceDeath = 0 // 死亡からの経過秒（GAME OVER 幕の遅延フェード用）
   private pal: Palette = themeAt(0) // 現在のシーン配色（毎フレーム更新）
   private trail: { y: number }[] = [] // プレイヤー残像（縦の動きが主）
   private speedLineAccum = 0 // スピードライン生成の端数
@@ -70,6 +71,9 @@ export class Game {
     let dt = (now - this.last) / 1000
     this.last = now
     if (dt > 0.05) dt = 0.05 // タブ離脱などで dt が跳ねたときの保険
+
+    // 死亡からの経過（凍結中も含めて進める。GAME OVER 幕の遅延フェードに使う）
+    if (this.state === 'gameover') this.sinceDeath += dt
 
     // 死亡ヒットストップ: ゲーム・パーティクルを凍結しつつ shake だけ走らせ、衝撃を焼き付ける
     if (this.freeze > 0) {
@@ -214,12 +218,14 @@ export class Game {
     this.freeze = 0
     this.slow = 0
     this.flash = 0
+    this.sinceDeath = 0
     this.score = 0
     this.state = 'playing'
   }
 
   private endRun() {
     this.state = 'gameover'
+    this.sinceDeath = 0
     const final = Math.floor(this.score)
     if (final > this.hiScore) {
       this.hiScore = final
@@ -297,9 +303,11 @@ export class Game {
     this.drawHud()
     if (this.state === 'ready') {
       this.drawCenterText('HOP RUNNER', 'SPACE / タップ でスタート')
-    } else if (this.state === 'gameover' && this.freeze <= 0) {
-      // フリーズ中はオーバーレイを出さず、死亡の瞬間（破片＋シェイク）を見せる
-      this.drawCenterText('GAME OVER', 'SPACE / タップ でリトライ')
+    } else if (this.state === 'gameover') {
+      // まず破片の飛散を見せ（deathLinger）、そのあと幕を遅れてフェードインする
+      const fadeIn = (this.sinceDeath - JUICE.deathLinger) / JUICE.deathOverlayFade
+      const alpha = Math.max(0, Math.min(1, fadeIn))
+      if (alpha > 0) this.drawCenterText('GAME OVER', 'SPACE / タップ でリトライ', alpha)
     }
   }
 
@@ -504,14 +512,14 @@ export class Game {
     ctx.globalAlpha = 1
   }
 
-  private drawCenterText(title: string, sub: string) {
+  private drawCenterText(title: string, sub: string, alpha = 1) {
     const ctx = this.ctx
     ctx.save()
-    ctx.globalAlpha = 0.72
+    ctx.globalAlpha = 0.72 * alpha
     ctx.fillStyle = this.pal.overlay
     ctx.fillRect(0, 0, VIEW.width, VIEW.height)
-    ctx.restore()
 
+    ctx.globalAlpha = alpha
     ctx.textAlign = 'center'
     ctx.fillStyle = this.pal.text
     ctx.font = '700 34px system-ui, sans-serif'
@@ -519,6 +527,7 @@ export class Game {
     ctx.fillStyle = this.pal.subText
     ctx.font = '16px system-ui, sans-serif'
     ctx.fillText(sub, VIEW.width / 2, VIEW.height / 2 + 26)
+    ctx.restore()
   }
 
   private roundRect(x: number, y: number, w: number, h: number, r: number) {

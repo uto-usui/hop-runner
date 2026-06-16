@@ -109,15 +109,15 @@ export class Particles {
   deathShards(cx: number, cy: number, color: string) {
     for (let i = 0; i < JUICE.particles.deathShards; i++) {
       const ang = Math.random() * Math.PI * 2
-      const sp = 120 + Math.random() * 260
+      const sp = 130 + Math.random() * 280
       this.emit(
         cx + (Math.random() - 0.5) * 20,
         cy + (Math.random() - 0.5) * 24,
-        Math.cos(ang) * sp - 120, // 全体に進行方向（左）へ流れる
-        Math.sin(ang) * sp - 120,
-        0.5 + Math.random() * 0.4,
+        Math.cos(ang) * sp - 110, // 全体に進行方向（左）へ流れる
+        Math.sin(ang) * sp - 150, // 上向き初速を強めて高く舞わせる
+        0.8 + Math.random() * 0.6, // 寿命を延ばして見えるように
         3 + Math.random() * 4,
-        900,
+        780,
         color,
         'shard',
       )

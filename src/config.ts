@@ -58,14 +58,17 @@ export const JUICE = {
     spring: 22, // 元の形へ戻る硬さ（大きいほど速く戻る）
   },
   particles: {
-    max: 160, // パーティクル上限（固定長プール）
+    max: 180, // パーティクル上限（固定長プール）
     landDustBase: 5, // 着地土埃の基本数（着地の勢いで増える）
     jumpKick: 4, // ジャンプ蹴り出しの数
-    deathShards: 10, // 死亡破片の数
+    deathShards: 18, // 死亡破片の数
   },
-  hitStopDeath: 0.09, // s 死亡時のフリーズ（衝撃を焼き付ける）
+  hitStopDeath: 0.1, // s 死亡時のフリーズ（衝撃を焼き付ける）
   hitStopNearMiss: 0.04, // s ニアミス時のスロー（Phase 2 で使用）
   retryLock: 0.25, // s 死亡後の入力ロック（連打事故と GAME OVER の見落とし防止）
+  // 死亡後、破片の飛散を見せてから GAME OVER 幕を出すための余韻。
+  deathLinger: 0.55, // s この間は幕を出さず破片を見せる
+  deathOverlayFade: 0.35, // s 余韻のあと幕をこの時間でフェードイン
 }
 
 // サウンド（WebAudio 手続き生成）。muted で全体オフ。
