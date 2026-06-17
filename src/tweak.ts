@@ -25,6 +25,7 @@ export function setupTweakPanel() {
   }
 
   const pane = new Pane({ title: 'Tune ⚙ (H で開閉)' })
+  pane.hidden = true // デフォルトは閉じておき、ゲーム画面を邪魔しない（H で開く）
 
   const jump = pane.addFolder({ title: 'ジャンプ' })
   jump.addBinding(PHYSICS, 'gravity', { min: 1000, max: 5000, step: 50 })
