@@ -39,12 +39,15 @@ canvas {
   user-select: none;
 }
 
-/* 言語トグル。data-no-jump で入力系（タップ=ジャンプ）から隔離している。 */
+/* 言語トグル。画面右下に固定する（上端はキャンバス内HUD、右上は Tweakpane と競合するため）。
+   data-no-jump で入力系（タップ=ジャンプ）から隔離している。 */
 .lang {
-  display: block;
-  margin: 8px auto 0;
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  z-index: 10;
   padding: 4px 12px;
-  background: transparent;
+  background: rgba(27, 31, 36, 0.72);
   border: 1px solid #3a3f47;
   border-radius: 6px;
   color: #8a93a0;
