@@ -18,6 +18,7 @@ const PLAYER_COLOR = '#3a6df0'
 const ORB_COLOR = '#f5c518'
 
 export class Game {
+  private canvas: HTMLCanvasElement
   private ctx: CanvasRenderingContext2D
   private input: Input
   private player = new Player()
@@ -44,11 +45,12 @@ export class Game {
   private dailyDate = '' // デイリーシード用の日付文字列
 
   constructor(canvas: HTMLCanvasElement) {
-    canvas.width = VIEW.width
-    canvas.height = VIEW.height
+    this.canvas = canvas
     const ctx = canvas.getContext('2d')
     if (!ctx) throw new Error('2D canvas context is not available')
     this.ctx = ctx
+    this.resize() // 描画バッファを devicePixelRatio に合わせ、高解像度ディスプレイでボケないように
+    window.addEventListener('resize', this.resize) // ウィンドウ幅 / モニタ間移動での DPR 変化に追従
     this.input = new Input()
     this.hiScore = Number(localStorage.getItem(HI_KEY) ?? 0)
     this.bestDistance = Number(localStorage.getItem(BEST_KEY) ?? 0)
@@ -60,6 +62,16 @@ export class Game {
     window.addEventListener('keydown', (e) => {
       if (e.code === 'KeyM') this.sound.toggleMute()
     })
+  }
+
+  // 描画バッファを論理解像度 VIEW × devicePixelRatio で確保し、コンテキストを dpr 倍にする。
+  // 以降の描画はすべて VIEW 座標のまま書け、表示サイズ（CSS）も変わらない。当たり判定にも無影響。
+  private resize = () => {
+    const dpr = window.devicePixelRatio || 1
+    this.canvas.width = Math.round(VIEW.width * dpr)
+    this.canvas.height = Math.round(VIEW.height * dpr)
+    // canvas.width/height への代入で変換は identity に戻るので、基準変換を dpr 倍に張り直す。
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
   }
 
   start() {
