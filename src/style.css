@@ -38,3 +38,23 @@ canvas {
   font-size: 13px;
   user-select: none;
 }
+
+/* 言語トグル。data-no-jump で入力系（タップ=ジャンプ）から隔離している。 */
+.lang {
+  display: block;
+  margin: 8px auto 0;
+  padding: 4px 12px;
+  background: transparent;
+  border: 1px solid #3a3f47;
+  border-radius: 6px;
+  color: #8a93a0;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.lang:hover {
+  color: #cfd6df;
+  border-color: #5a616b;
+}

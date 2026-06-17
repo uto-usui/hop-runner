@@ -30,9 +30,9 @@ export class Input {
 
     // タップはゲーム画面の外（周囲の余白）も含めてページ全体で受け付ける。
     // キャンバスを直接押すと指で描画が隠れるため、外側でも操作できるようにする。
-    // ただし調整パネル（Tweakpane）上の操作はジャンプにしない（スライダー操作との衝突を防ぐ）。
+    // ただし調整パネル（Tweakpane）や言語トグル等の UI 操作はジャンプにしない。
     window.addEventListener('pointerdown', (e) => {
-      if (e.target instanceof Element && e.target.closest('.tp-dfwv')) return
+      if (e.target instanceof Element && e.target.closest('.tp-dfwv, [data-no-jump]')) return
       e.preventDefault()
       press()
     })
