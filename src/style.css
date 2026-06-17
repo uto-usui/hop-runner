@@ -15,6 +15,15 @@ body {
   min-height: 100vh;
   background: #1b1f24;
   font-family: system-ui, -apple-system, sans-serif;
+
+  /* タップ＝ジャンプだけのゲーム。テキスト選択・iOS の長押しメニュー・タップ青ハイライトを
+     ページ全体で抑止し、誤って描画エリアや文字を選択しないようにする（クリックは妨げない）。
+     ダブルタップズーム抑止は touch-action（継承しないので body にも）／canvas の none が担う。 */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 #app {
