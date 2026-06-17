@@ -46,6 +46,7 @@ squash & stretch・トレイル・shake・zoom・パララックスは**描画�
 ### クリア可能エンベロープ（理不尽を出さない不変条件）
 `patterns.ts` は現在の `PHYSICS`/`speed` から「タップジャンプで越えられる最大の高さ・幅」(`maxClearableHeight`/`maxClearableWidth`) を算出し、全 SpawnSpec を `clampSpec` で必ずその範囲に収める。難易度は距離 `p=distance/difficultyRampDist` による重み付き抽選（`TABLE`）でパターン種別が変わるだけで、個々の障害物は常に越えられる。**新しいパターンビルダーを足すときも必ず `clampSpec` を通す。**
 **サイズだけでなく「間隔×速度」も不変条件**: 連続障害物を着地→再ジャンプで越えるには間隔が滞空時間ぶん必要なので、`maxClearableSpeed()`(= `OBSTACLE.minGap / tapAirtime`) を算出し、`world` が実速度を `min(SPEED.max, maxClearableSpeed())` にクランプする。これを超えると高速域で間隔が詰まり腕に関係なく避けられない＝運ゲーになるため。`SPEED.max` や `OBSTACLE.minGap` を変えるとこの上限も連動する。
+**連続パターン（double/triple）のスパンも不変条件**: 固定威力ジャンプでは狭い隙間に着地できないため、連続パターンは「1回の長押しジャンプで全部跨げる」長さに収める。`clampPatternSpan` が合計スパンを `maxClearableSpan(speed, height)`（= 高さ height 以上を保てる長押し滞空時間 × speed − プレイヤー幅、低速ほど小さい）以下にブロック間隔を圧縮し、詰めても無理なら single にフォールバックする。これでデフォルト設定でも理論上クリア不能な配置が出ない。`pickPattern` の `clampSpec` 後に必ず通す。
 
 ### 決定論と乱数
 `rng.ts` は xorshift32。`World` と `Collectibles` がこの Rng を共有シードで初期化し、`SEED.daily` のときは日付文字列 (`seedFromString`) から固定シードを作る＝同じ日は同じ地形。
