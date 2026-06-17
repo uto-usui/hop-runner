@@ -138,3 +138,12 @@ export const ORB = {
 export const SEED = {
   daily: false,
 }
+
+// オート（アトラクト）モード。タイトル / ゲームオーバーで放置すると自動プレイで景色を流す。
+// 当たり判定オフ＝無敗で、記録（ハイスコア/自己ベスト）は保存しない。表示・体験専用。
+export const AUTO = {
+  attractDelay: 6, // s 無操作がこの秒数続くと自動プレイ開始
+  leadTime: 0.3, // s 障害物がこの滞空時間ぶん手前に来たら踏み切る（apex を障害物に合わせる）
+  tallThreshold: 44, // px これ以上高い障害物は長押しで余裕を持って越える
+  wideThreshold: 48, // px これ以上広い障害物も長押しで滞空を伸ばす
+}

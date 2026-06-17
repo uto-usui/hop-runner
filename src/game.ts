@@ -1,5 +1,6 @@
+import { autoInput } from './autopilot'
 import { Collectibles } from './collectibles'
-import { GROUND_Y, JUICE, ORB, PARALLAX, SCORE, SEED, SHAKE, SPEED, VFX, VIEW } from './config'
+import { AUTO, GROUND_Y, JUICE, ORB, PARALLAX, SCORE, SEED, SHAKE, SPEED, VFX, VIEW } from './config'
 import { t } from './i18n'
 import { Input } from './input'
 import { Camera } from './juice/camera'
@@ -44,6 +45,8 @@ export class Game {
   private collectibles = new Collectibles()
   private bestDistance = 0 // 自己ベスト距離（マーカー表示と更新に使う）
   private dailyDate = '' // デイリーシード用の日付文字列
+  private auto = false // 自動プレイ（アトラクト / 眺めるモード）中か
+  private idle = 0 // 非プレイ中の無操作経過秒（アトラクト開始の判定に使う）
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas
@@ -114,18 +117,39 @@ export class Game {
     const pressed = this.input.takePress()
 
     if (this.state !== 'playing') {
-      if (pressed && this.retryLock <= 0) this.beginRun()
+      if (pressed && this.retryLock <= 0) {
+        this.beginRun(false) // 入力でスタート（手動ラン）
+      } else if (this.retryLock <= 0) {
+        // タイトル / ゲームオーバーで無操作が続いたらアトラクト（自動プレイ）に入る
+        this.idle += dt
+        if (this.idle >= AUTO.attractDelay) this.beginRun(true)
+      }
       return
     }
 
+    // 自動プレイ中に入力が入ったら操作を引き継ぎ、手動ランを新しく始める
+    if (this.auto && pressed) {
+      this.beginRun(false)
+      return
+    }
+
+    // 入力の出どころ: auto なら自動操縦、通常は実入力
+    let jumpPressed = pressed
+    let holding = this.input.holding
+    if (this.auto) {
+      const a = autoInput(this.player, this.world.obstacles, this.world.speed)
+      jumpPressed = a.jump
+      holding = a.hold
+    }
+
     // 接地中の押下だけが実ジャンプ（空中の押しでは音も塵も出さない）
-    if (pressed && this.player.grounded) {
+    if (jumpPressed && this.player.grounded) {
       this.player.jump()
       this.sound.jump()
       this.particles.jumpKick(this.player.x + this.player.width / 2, GROUND_Y)
     }
 
-    this.player.update(dt, this.input.holding)
+    this.player.update(dt, holding)
 
     if (this.player.justLanded) {
       const impact = this.player.landingImpact
@@ -173,7 +197,7 @@ export class Game {
       }
     }
 
-    if (this.collides()) this.endRun()
+    if (!this.auto && this.collides()) this.endRun() // 自動プレイは無敗（当たり判定オフ）
   }
 
   private speedNorm(): number {
@@ -216,7 +240,9 @@ export class Game {
     }
   }
 
-  private beginRun() {
+  private beginRun(auto = false) {
+    this.auto = auto // true=アトラクト自動プレイ（無敗・記録非保存）
+    this.idle = 0
     // デイリーシード on なら当日固定の地形、off なら毎回ランダム
     const seed = SEED.daily ? seedFromString(this.dailyDate) : undefined
     this.player.reset()
@@ -239,6 +265,7 @@ export class Game {
   private endRun() {
     this.state = 'gameover'
     this.sinceDeath = 0
+    this.idle = 0 // ゲームオーバー後もここからアトラクト待機の時間を数える
     const final = Math.floor(this.score)
     if (final > this.hiScore) {
       this.hiScore = final
@@ -314,6 +341,7 @@ export class Game {
     }
     this.drawFloaters()
     this.drawHud()
+    if (this.state === 'playing' && this.auto) this.drawAutoOverlay()
     if (this.state === 'ready') {
       this.drawCenterText(t('title'), t('readySub'))
     } else if (this.state === 'gameover') {
@@ -527,6 +555,21 @@ export class Game {
       ctx.font = '11px system-ui, sans-serif'
       ctx.fillText(`${t('hudDaily')} ${this.dailyDate}`, VIEW.width / 2, 20)
     }
+  }
+
+  // 自動プレイ中の表示: 上部に「AUTO」バッジ、下部に操作を引き継げる旨の控えめなヒント。
+  private drawAutoOverlay() {
+    const ctx = this.ctx
+    ctx.save()
+    ctx.textAlign = 'center'
+    ctx.fillStyle = this.pal.subText
+    // デイリー表示と重ならないよう、daily on のときは少し下げる
+    ctx.font = '700 12px system-ui, sans-serif'
+    ctx.fillText(t('autoBadge'), VIEW.width / 2, SEED.daily ? 38 : 20)
+    ctx.globalAlpha = 0.45 + 0.3 * Math.sin(this.world.distance * 0.02) // ゆっくり明滅
+    ctx.font = '13px system-ui, sans-serif'
+    ctx.fillText(t('autoHint'), VIEW.width / 2, VIEW.height - 18)
+    ctx.restore()
   }
 
   private drawFloaters() {

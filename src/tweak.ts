@@ -1,6 +1,6 @@
 import { Pane } from 'tweakpane'
 import {
-  AUDIO, JUICE, OBSTACLE, ORB, PARALLAX, PATTERN, PHYSICS, SCORE, SEED, SHAKE, SPEED, THEME, VFX,
+  AUDIO, AUTO, JUICE, OBSTACLE, ORB, PARALLAX, PATTERN, PHYSICS, SCORE, SEED, SHAKE, SPEED, THEME, VFX,
 } from './config'
 
 // config の値を実行中に調整するための Tweakpane パネル。
@@ -22,6 +22,7 @@ export function setupTweakPanel() {
     parallax: { ...PARALLAX },
     vfx: { ...VFX },
     orb: { ...ORB },
+    auto: { ...AUTO },
   }
 
   const pane = new Pane({ title: 'Tune ⚙ (H で開閉)' })
@@ -78,6 +79,10 @@ export function setupTweakPanel() {
   extra.addBinding(ORB, 'points', { label: 'オーブ点', min: 0, max: 200, step: 10 })
   extra.addBinding(SEED, 'daily', { label: 'デイリー(次回〜)' })
 
+  const auto = pane.addFolder({ title: 'オート（眺める）', expanded: false })
+  auto.addBinding(AUTO, 'attractDelay', { label: '放置で自動(s)', min: 2, max: 30, step: 1 })
+  auto.addBinding(AUTO, 'leadTime', { label: '踏み切りの早さ(s)', min: 0.15, max: 0.5, step: 0.01 })
+
   pane.addBlade({ view: 'separator' })
   pane.addButton({ title: 'デフォルトに戻す' }).on('click', () => {
     Object.assign(PHYSICS, defaults.physics)
@@ -93,6 +98,7 @@ export function setupTweakPanel() {
     Object.assign(PARALLAX, defaults.parallax)
     Object.assign(VFX, defaults.vfx)
     Object.assign(ORB, defaults.orb)
+    Object.assign(AUTO, defaults.auto)
     pane.refresh()
   })
 

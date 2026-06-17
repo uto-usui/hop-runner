@@ -22,6 +22,8 @@ interface Messages {
   hint: string
   docTitle: string
   langSwitch: string // 言語トグルに出す「切替先」のラベル
+  autoBadge: string // 自動プレイ中のバッジ
+  autoHint: string // 自動プレイ中、操作を引き継げることを示す控えめなヒント
 }
 
 type MessageKey = keyof Messages
@@ -43,6 +45,8 @@ const STRINGS: Record<Locale, Messages> = {
     hint: 'SPACE / タップ でジャンプ ・ H で調整パネル',
     docTitle: 'Hop Runner',
     langSwitch: 'EN',
+    autoBadge: 'AUTO',
+    autoHint: '何か押して プレイ',
   },
   en: {
     title: 'HOP RUNNER',
@@ -58,6 +62,8 @@ const STRINGS: Record<Locale, Messages> = {
     hint: 'SPACE / TAP to jump · H: tuning panel',
     docTitle: 'Hop Runner',
     langSwitch: '日本語',
+    autoBadge: 'AUTO',
+    autoHint: 'PRESS / TAP to play',
   },
 }
 
