@@ -9,7 +9,7 @@ export class Input {
   /** 押し始めたフレームだけ true。takePress() で1回だけ取り出す */
   private pressed = false
 
-  constructor(target: HTMLElement) {
+  constructor() {
     const press = () => {
       if (!this.holding) this.pressed = true
       this.holding = true
@@ -28,7 +28,11 @@ export class Input {
       release()
     })
 
-    target.addEventListener('pointerdown', (e) => {
+    // タップはゲーム画面の外（周囲の余白）も含めてページ全体で受け付ける。
+    // キャンバスを直接押すと指で描画が隠れるため、外側でも操作できるようにする。
+    // ただし調整パネル（Tweakpane）上の操作はジャンプにしない（スライダー操作との衝突を防ぐ）。
+    window.addEventListener('pointerdown', (e) => {
+      if (e.target instanceof Element && e.target.closest('.tp-dfwv')) return
       e.preventDefault()
       press()
     })

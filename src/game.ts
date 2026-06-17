@@ -49,7 +49,7 @@ export class Game {
     const ctx = canvas.getContext('2d')
     if (!ctx) throw new Error('2D canvas context is not available')
     this.ctx = ctx
-    this.input = new Input(canvas)
+    this.input = new Input()
     this.hiScore = Number(localStorage.getItem(HI_KEY) ?? 0)
     this.bestDistance = Number(localStorage.getItem(BEST_KEY) ?? 0)
     this.dailyDate = new Date().toISOString().slice(0, 10)
