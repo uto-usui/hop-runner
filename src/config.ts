@@ -25,9 +25,9 @@ export const PHYSICS = {
 }
 
 export const SPEED = {
-  start: 320, // px/s 初期スクロール速度（次のランから反映）
-  max: 640, // px/s 最高速
-  accel: 9, // px/s 1秒あたりに増える速度（難易度の上がり方）
+  start: 250, // px/s 初期スクロール速度（次のランから反映）
+  max: 600, // px/s 最高速
+  accel: 5, // px/s 1秒あたりに増える速度（難易度の上がり方）
 }
 
 // 障害物の個々のサイズは patterns.ts が距離に応じて決める。
@@ -114,10 +114,10 @@ export const THEME = {
 // 速度連動の演出（トレイル・ビネット・カメラ引き・スピードライン）。
 export const VFX = {
   trailFrames: 6, // プレイヤー残像の枚数
-  trailAlpha: 0.22, // 残像の最大不透明度
+  trailAlpha: 0.06, // 残像の最大不透明度
   vignetteBase: 0.04, // 画面端ビネットの基本濃さ
   vignetteMax: 0.2, // 最高速での追加濃さ
-  zoomOut: 0.04, // 最高速でのカメラ引き量（4%）
+  zoomOut: 0.02, // 最高速でのカメラ引き量（2%）
   speedLineThreshold: 0.45, // この正規化速度を超えるとスピードライン
   speedLineRate: 22, // 1秒あたりのスピードライン本数（最高速時）
 }
