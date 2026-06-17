@@ -68,6 +68,13 @@ src/
 手触り・難易度・演出の調整は基本 `src/config.ts` の数字だけで完結し、`H` の Tweakpane から実行中にも触れる。
 まず `PHYSICS`（ジャンプの気持ちよさ）と `SPEED`（難易度の上がり方）をいじるのがおすすめ。
 
+### ブランディング（OGP / favicon）
+
+シェア用の OGP カード・favicon・PWA アイコンは `branding/` の SVG が唯一のソース。
+`branding/icon.svg`（アプリアイコン）/ `branding/og.svg`（1200×630）を編集したら、`sh branding/build-assets.sh`
+（要 `rsvg-convert` + `magick`）で `public/` の PNG・ICO・`og.png` を再生成する。配色・キャラ・障害物・オーブは
+実ゲームの描画に揃えてある。メタタグは `index.html` の `<head>` 参照。
+
 ## 設計メモ
 
 - 操作は **ジャンプ1入力のみ**（`input.ts` は不変）。演出・採点・地形を足しても操作のシンプルさは変えない。

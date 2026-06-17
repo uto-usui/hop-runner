@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- OGP / Twitter カード用 1200x630。og.png の生成元。
+     ゲームの夕暮れシーン（src/theme.ts SCENES[2]）を切り取った構図に、跳躍中のキャラ・障害物・
+     収集オーブ・ホップ弧・タイトルを配置。配色・素材はすべて実ゲームの描画に対応させている。 -->
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3a2c45"/>
+      <stop offset="0.5" stop-color="#7d5577"/>
+      <stop offset="1" stop-color="#f3a26b"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffe7c2"/>
+      <stop offset="0.55" stop-color="#ffcf94"/>
+      <stop offset="1" stop-color="#ffcf94" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="orbGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#f5c518"/>
+      <stop offset="1" stop-color="#f5c518" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="vignette" cx="0.5" cy="0.5" r="0.62">
+      <stop offset="0.6" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.28"/>
+    </radialGradient>
+  </defs>
+
+  <!-- 空 -->
+  <rect width="1200" height="630" fill="url(#sky)"/>
+  <!-- 夕日 -->
+  <circle cx="985" cy="430" r="175" fill="url(#sun)"/>
+
+  <!-- 多層の丘（パララックス背景に対応） -->
+  <path d="M0 430 Q 220 372 460 412 T 920 400 T 1200 408 V630 H0 Z" fill="#6e5a86" opacity="0.5"/>
+  <path d="M0 470 Q 260 418 540 452 T 1040 442 T 1200 450 V630 H0 Z" fill="#8a5f72" opacity="0.7"/>
+  <path d="M0 500 Q 300 470 620 492 T 1200 486 V630 H0 Z" fill="#b5705f" opacity="0.85"/>
+
+  <!-- 地面 -->
+  <rect x="0" y="500" width="1200" height="130" fill="#5c4a54"/>
+  <rect x="0" y="500" width="1200" height="6" fill="#2a1f33"/>
+  <!-- 路面の破線 -->
+  <g fill="#7a5f63">
+    <rect x="60" y="522" width="40" height="7"/><rect x="180" y="522" width="40" height="7"/>
+    <rect x="300" y="522" width="40" height="7"/><rect x="420" y="522" width="40" height="7"/>
+    <rect x="540" y="522" width="40" height="7"/><rect x="1140" y="522" width="40" height="7"/>
+  </g>
+
+  <!-- 障害物（アンバー） -->
+  <rect x="908" y="420" width="46" height="80" rx="4" fill="#e8a13a"/>
+  <rect x="1130" y="448" width="40" height="52" rx="4" fill="#e8a13a"/>
+
+  <!-- ホップ弧（飛跡） -->
+  <path d="M770 500 Q 930 40 1090 500" fill="none" stroke="#fbeede" stroke-width="6"
+        stroke-linecap="round" stroke-dasharray="2 18" opacity="0.55"/>
+
+  <!-- 収集オーブ -->
+  <g>
+    <circle cx="866" cy="307" r="32" fill="url(#orbGlow)"/>
+    <circle cx="866" cy="307" r="14" fill="#f5c518"/><circle cx="861" cy="302" r="5" fill="#fff8e0"/>
+    <circle cx="994" cy="307" r="32" fill="url(#orbGlow)"/>
+    <circle cx="994" cy="307" r="14" fill="#f5c518"/><circle cx="989" cy="302" r="5" fill="#fff8e0"/>
+    <circle cx="930" cy="206" r="40" fill="url(#orbGlow)"/>
+    <circle cx="930" cy="206" r="17" fill="#f5c518"/><circle cx="924" cy="200" r="6" fill="#fff8e0"/>
+  </g>
+
+  <!-- プレイヤーの残像（高速トレイル。上昇中なので過去位置は下側） -->
+  <g fill="#3a6df0">
+    <rect x="888" y="312" width="84" height="108" rx="18" opacity="0.12"/>
+    <rect x="888" y="278" width="84" height="108" rx="18" opacity="0.22"/>
+  </g>
+  <!-- プレイヤー（跳躍の頂点・青い角丸キャラ＋右向きの目） -->
+  <g>
+    <rect x="888" y="246" width="84" height="108" rx="18" fill="#3a6df0"/>
+    <ellipse cx="950" cy="276" rx="11" ry="12" fill="#ffffff"/>
+    <circle cx="953" cy="278" r="4.5" fill="#1b2b54"/>
+  </g>
+
+  <!-- タイトル -->
+  <text x="80" y="200" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
+        font-weight="800" font-size="118" fill="#fbeede" letter-spacing="-2">HOP RUNNER</text>
+  <text x="84" y="262" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
+        font-weight="600" font-size="40" fill="#fbeede" opacity="0.92">One-button auto-runner</text>
+  <text x="84" y="312" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
+        font-weight="500" font-size="27" fill="#fbeede" opacity="0.72">Tap to jump · graze to combo · run far</text>
+
+  <!-- URL -->
+  <text x="80" y="586" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
+        font-weight="600" font-size="26" fill="#fbeede" opacity="0.8">▶ uto-usui.github.io/hop-runner</text>
+
+  <!-- ビネット（ゲームの演出に対応） -->
+  <rect width="1200" height="630" fill="url(#vignette)"/>
+</svg>

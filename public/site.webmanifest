@@ -1,0 +1,16 @@
+{
+  "name": "Hop Runner",
+  "short_name": "Hop Runner",
+  "description": "ジャンプだけのオートランナー。タイミングと長押しで障害物を跳び越え、ニアミスでコンボを稼ぐ。",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#11151c",
+  "theme_color": "#11151c",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

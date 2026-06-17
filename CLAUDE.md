@@ -68,3 +68,9 @@ squash & stretch・トレイル・shake・zoom・パララックスは**描画�
 
 ### dev フック
 `import.meta.env.DEV` のときだけ `window.game` に Game インスタンスを公開（手動チューニング・デバッグ用）。本番ビルドには出さない。
+
+### メタ情報・ブランディング（OGP / favicon）
+シェア時の見た目（OGP カード・favicon・apple-touch・PWA マニフェスト）は `index.html` の `<head>` と `public/` の静的アセットで持つ。
+- **SVG が唯一のソース**: `branding/icon.svg`（アプリアイコン＝フルブリード正方形）と `branding/og.svg`（OGP 1200×630）。配色・キャラ・障害物・オーブは実ゲーム（`theme.ts` の夕暮れシーン・`PLAYER_COLOR`・`ORB_COLOR`）に対応させている。**PNG/ICO は生成物なので手編集しない。** `branding/icon.svg` を直す → `sh branding/build-assets.sh`（要 `rsvg-convert` + `magick`）で `public/` のアイコン群と `og.png` を再生成する。`public/favicon.svg` はタブ用の角丸・簡潔版で、これ自体が配信されるソース。
+- **パス解決の不変条件**: `index.html` の favicon/manifest は `/favicon.svg` のように **`/` 始まりで書く**（Vite が本番ビルドで base=`/hop-runner/` を前置する）。一方 **OGP/Twitter の `og:image`・`og:url`・`canonical` はクローラが base を解釈できないので絶対 URL を直書き**（`https://uto-usui.github.io/hop-runner/...`）。デプロイ先 URL を変えたら `vite.config.ts` の base に加えてこの絶対 URL も直す。
+- 表示専用。当たり判定・採点・地形/オーブの決定論には一切関与しない。

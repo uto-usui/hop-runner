@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ブラウザタブ用 favicon。小サイズでも読めるよう、キャラを大きく・要素を絞った角丸版。
+     apple-touch / OGP と同じ夕暮れ配色（src/theme.ts SCENES[2]）でブランドを揃える。 -->
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4a3b6e"/>
+      <stop offset="0.55" stop-color="#9c5f6e"/>
+      <stop offset="1" stop-color="#f3a26b"/>
+    </linearGradient>
+    <radialGradient id="orbGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#f5c518"/>
+      <stop offset="1" stop-color="#f5c518" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="round"><rect width="512" height="512" rx="108"/></clipPath>
+  </defs>
+
+  <g clip-path="url(#round)">
+    <rect width="512" height="512" fill="url(#sky)"/>
+
+    <!-- 地面 -->
+    <rect x="0" y="438" width="512" height="74" fill="#5c4a54"/>
+    <rect x="0" y="438" width="512" height="7" fill="#3a2f38"/>
+
+    <!-- ホップ弧 -->
+    <path d="M86 438 Q 256 96 426 438" fill="none" stroke="#fbeede" stroke-width="12"
+          stroke-linecap="round" stroke-dasharray="3 30" opacity="0.6"/>
+
+    <!-- 収集オーブ -->
+    <circle cx="408" cy="150" r="46" fill="url(#orbGlow)"/>
+    <circle cx="408" cy="150" r="22" fill="#f5c518"/>
+    <circle cx="400" cy="142" r="8" fill="#fff8e0"/>
+
+    <!-- プレイヤー（青い角丸キャラ＋右向きの目） -->
+    <rect x="168" y="150" width="150" height="194" rx="32" fill="#3a6df0"/>
+    <ellipse cx="286" cy="208" rx="19" ry="22" fill="#ffffff"/>
+    <circle cx="290" cy="211" r="8" fill="#1b2b54"/>
+  </g>
+</svg>
