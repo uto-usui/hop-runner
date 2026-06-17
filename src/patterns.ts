@@ -1,4 +1,4 @@
-import { OBSTACLE, PATTERN, PHYSICS, PLAYER } from './config'
+import { OBSTACLE, PATTERN, PHYSICS, PLAYER, SPEED } from './config'
 import { Rng } from './rng'
 
 export type ObstacleKind = 'block' | 'low' | 'tall'
@@ -41,46 +41,6 @@ export function maxClearableSpeed(): number {
   return OBSTACLE.minGap / standardAirtime()
 }
 
-// --- 連続パターンの「1ジャンプ越え」保証（方針A） ---
-// 固定威力ジャンプ（最低でも滞空 0.6s）では連続ブロックの狭い隙間に着地できないため、
-// 連続パターンは「1回の長押しジャンプで全部を跨げる」長さに収める。そうすれば理不尽
-// （理論上避けられない配置）が出ない。長押しジャンプの「高さ H 以上を保てる滞空時間」を
-// 物理から求め、その間に進める水平距離がプレイヤー幅＋スパンを覆える、を条件にする。
-
-/** 長押しジャンプで高さ height(px) 以上を保てる滞空時間(s)。
- *  上昇は maxHoldTime まで減衰重力、以降は通常重力、下降は通常重力で区分積分する。 */
-function timeAboveHeight(height: number): number {
-  const g = PHYSICS.gravity
-  const v0 = PHYSICS.jumpVelocity
-  const holdG = g * PHYSICS.holdGravityScale
-  const tHold = Math.min(PHYSICS.maxHoldTime, v0 / holdG) // 減衰重力が効く時間
-  const yHold = v0 * tHold - 0.5 * holdG * tHold * tHold // 減衰区間終わりの高さ
-  const vHold = v0 - holdG * tHold // 同時点の上向き速度
-  const apex = yHold + (vHold * vHold) / (2 * g) // 長押し込みの最高到達点
-  const h = Math.max(0, height)
-  if (h >= apex) return 0
-
-  const tApex = tHold + vHold / g
-  // 高さ h を上向きに横切る時刻（h が減衰区間の高さ以下かどうかで分岐）
-  const tUp =
-    h <= yHold
-      ? (v0 - Math.sqrt(v0 * v0 - 2 * holdG * h)) / holdG
-      : tHold + (vHold - Math.sqrt(vHold * vHold - 2 * g * (h - yHold))) / g
-  // 下向きに横切る時刻（頂点から自由落下）
-  const tDown = tApex + Math.sqrt((2 * (apex - h)) / g)
-  return tDown - tUp
-}
-
-/** 1回の長押しジャンプで、高さ height 以上を保ったまま跨げる連続パターンの最大スパン(px)。
- *  speed が低いほど（横移動が短いぶん）小さくなる＝低速ほど厳しい。安全余裕込み。 */
-export function maxClearableSpan(speed: number, height: number): number {
-  const verticalMargin = 4 // px 当たり判定の甘さ・誤差ぶん高めに見積もる
-  const timeMargin = 1 / 30 // s フレーム離散・踏み切りタイミング誤差
-  const horizontalMargin = 8 // px 端の余裕
-  const highTime = Math.max(0, timeAboveHeight(height + verticalMargin) - timeMargin)
-  return Math.max(0, speed * highTime - PLAYER.width - horizontalMargin)
-}
-
 function clampSpec(spec: SpawnSpec, speed: number): SpawnSpec {
   return {
     ...spec,
@@ -89,33 +49,45 @@ function clampSpec(spec: SpawnSpec, speed: number): SpawnSpec {
   }
 }
 
-// 連続パターン（double/triple）の合計スパンを maxClearableSpan に収める。
-// 収まらなければブロック間隔を一律圧縮し、圧縮しても無理（ブロック幅の合計すら超える）なら
-// 先頭1個（single 相当）にフォールバックする。これで必ず1回の長押しジャンプで越えられる。
-function clampPatternSpan(specs: SpawnSpec[], speed: number): SpawnSpec[] {
+// --- 連続パターンの「間で跳ぶ」保証（hop-between） ---
+// 固定威力ジャンプでは狭い隙間に着地できないので、連続ブロックは「1つ越えて着地し、また跳ぶ」
+// に足る間隔まで広げる。各ブロックは clampSpec 済み＝個別に越えられるので、間に着地できれば
+// 必ずクリア可能。間隔は SPEED.max 基準（到達時に速くなっても保証されるよう最悪値）で見積もる。
+
+const GAP_MARGIN = 24 // px 着地余裕
+const CROSS_SAFETY = 1.5 // 横断項の安全係数（autopilot と揃える）
+
+// 高さ h・幅 w のブロックを「最小ジャンプで越える」のに必要な滞空時間(s)。SPEED.max 基準。
+function clearAirtime(h: number, w: number): number {
+  const g = PHYSICS.gravity
+  const overlapTime = (w + PLAYER.width + 10) / SPEED.max
+  const apexNeeded = h + 6 + ((g * overlapTime * overlapTime) / 8) * CROSS_SAFETY
+  return 2 * Math.sqrt((2 * apexNeeded) / g)
+}
+
+// 連続ブロックを着地して跳び直すのに必要な中心間隔(px)。D ≈ SPEED.max·滞空（1つ越えて降り、
+// 次を踏み切るのが間に合う距離）＋着地余裕。
+function requiredCenterGap(h: number, w: number): number {
+  return SPEED.max * clearAirtime(h, w) + GAP_MARGIN
+}
+
+// 連続パターンのブロック間隔を「間で跳べる」最小中心間隔以上に広げる（狭ければ広げるだけ）。
+// 広げる方向なので常にクリア可能になる。rng は消費しない（決定論を保つ）。
+function clampPatternGaps(specs: SpawnSpec[]): SpawnSpec[] {
   if (specs.length <= 1) return specs
   const ordered = [...specs].sort((a, b) => a.dx - b.dx)
-  const maxHeight = Math.max(...ordered.map((s) => s.height))
-  const maxSpan = maxClearableSpan(speed, maxHeight)
-  const last = ordered[ordered.length - 1]!
-  const span = last.dx + last.width - ordered[0]!.dx
-  if (span <= maxSpan) return ordered
-
-  const widths = ordered.reduce((sum, s) => sum + s.width, 0)
-  const totalGap = span - widths
-  const targetGap = maxSpan - widths
-  // ブロック幅の合計すら入らない＝詰めても1ジャンプで越えられないので single にフォールバック
-  if (totalGap <= 0 || targetGap <= 0) return [{ ...ordered[0]!, dx: 0 }]
-
-  const gapScale = targetGap / totalGap
-  let x = 0
-  return ordered.map((s, i) => {
-    if (i === 0) return { ...s, dx: 0 }
-    const prev = ordered[i - 1]!
-    const rawGap = s.dx - (prev.dx + prev.width)
-    x += prev.width + rawGap * gapScale
-    return { ...s, dx: x }
-  })
+  const out: SpawnSpec[] = [{ ...ordered[0]!, dx: 0 }]
+  for (let i = 1; i < ordered.length; i++) {
+    const s = ordered[i]!
+    const prev = out[i - 1]!
+    const need = requiredCenterGap(Math.max(prev.height, s.height), Math.max(prev.width, s.width))
+    const origCenterGap =
+      ordered[i]!.dx + s.width / 2 - (ordered[i - 1]!.dx + ordered[i - 1]!.width / 2)
+    const centerGap = Math.max(need, origCenterGap)
+    const center = prev.dx + prev.width / 2 + centerGap
+    out.push({ ...s, dx: center - s.width / 2 })
+  }
+  return out
 }
 
 // --- パターンビルダー ---
@@ -145,24 +117,24 @@ const tall: Builder = (rng) => [
   { dx: 0, width: rng.range(16, 24), height: rng.range(48, maxClearableHeight()), kind: 'tall' },
 ]
 
-// 2連 → 間に着地して跳び直すリズム
+// 2連リズム → 小ホップで1つ越え、間に着地してまた跳ぶ。低く細いブロック（hop-between 用）。
+// 間隔は clampPatternGaps が「間で跳べる」最小値まで広げるので、ここは下限の目安でよい。
 const double: Builder = (rng) => {
-  const w1 = rng.range(18, 32)
-  const h1 = rng.range(28, 46)
+  const w1 = rng.range(16, 26)
   const gap = PATTERN.landingBufferPx + rng.range(0, 40)
   return [
-    { dx: 0, width: w1, height: h1, kind: 'block' },
-    { dx: w1 + gap, width: rng.range(18, 32), height: rng.range(28, 46), kind: 'block' },
+    { dx: 0, width: w1, height: rng.range(22, 34), kind: 'block' },
+    { dx: w1 + gap, width: rng.range(16, 26), height: rng.range(22, 34), kind: 'block' },
   ]
 }
 
-// 3連の階段リズム
+// 3連リズム → 同上の小ホップ連打。
 const triple: Builder = (rng) => {
   const specs: SpawnSpec[] = []
   let x = 0
   for (let i = 0; i < 3; i++) {
-    const w = rng.range(16, 28)
-    specs.push({ dx: x, width: w, height: rng.range(26, 44), kind: 'block' })
+    const w = rng.range(16, 24)
+    specs.push({ dx: x, width: w, height: rng.range(22, 32), kind: 'block' })
     x += w + PATTERN.landingBufferPx + rng.range(0, 30)
   }
   return specs
@@ -208,5 +180,5 @@ export function pickPattern(distance: number, speed: number, rng: Rng, auto = fa
     }
   }
   const specs = chosen.build(rng, speed).map((s) => clampSpec(s, speed))
-  return clampPatternSpan(specs, speed) // 連続パターンを1ジャンプ越え可能な長さに収める
+  return clampPatternGaps(specs) // 連続パターンを「間で跳べる」間隔まで広げる
 }
