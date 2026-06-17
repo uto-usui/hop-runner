@@ -44,9 +44,9 @@ pnpm typecheck  # tsc --noEmit（型チェックのみ）
 squash & stretch・トレイル・shake・zoom・パララックスは**描画専用**で、当たり判定・採点には絶対に影響させない。描画は `背景(camera外=全面塗りでフレームクリア兼用) → camera(shake/zoom)内で 地面・障害物・オーブ・プレイヤー・パーティクル → ビネット/フラッシュ/浮遊点/HUD(camera外)` の順。HUD やフラッシュを camera 内に入れると揺れて読めなくなる。
 
 ### クリア可能エンベロープ（理不尽を出さない不変条件）
-`patterns.ts` は現在の `PHYSICS`/`speed` から「タップジャンプで越えられる最大の高さ・幅」(`maxClearableHeight`/`maxClearableWidth`) を算出し、全 SpawnSpec を `clampSpec` で必ずその範囲に収める。難易度は距離 `p=distance/difficultyRampDist` による重み付き抽選（`TABLE`）でパターン種別が変わるだけで、個々の障害物は常に越えられる。**新しいパターンビルダーを足すときも必ず `clampSpec` を通す。**
+`patterns.ts` は現在の `PHYSICS`/`speed` から「標準ジャンプ（早離し/float なしの素のジャンプ、`standardApex`/`standardAirtime`）で越えられる最大の高さ・幅」(`maxClearableHeight`/`maxClearableWidth`) を算出し、全 SpawnSpec を `clampSpec` で必ずその範囲に収める。難易度は距離 `p=distance/difficultyRampDist` による重み付き抽選（`TABLE`）でパターン種別が変わるだけで、個々の障害物は常に越えられる。**新しいパターンビルダーを足すときも必ず `clampSpec` を通す。**
 **サイズだけでなく「間隔×速度」も不変条件**: 連続障害物を着地→再ジャンプで越えるには間隔が滞空時間ぶん必要なので、`maxClearableSpeed()`(= `OBSTACLE.minGap / tapAirtime`) を算出し、`world` が実速度を `min(SPEED.max, maxClearableSpeed())` にクランプする。これを超えると高速域で間隔が詰まり腕に関係なく避けられない＝運ゲーになるため。`SPEED.max` や `OBSTACLE.minGap` を変えるとこの上限も連動する。
-**連続パターン（double/triple）のスパンも不変条件**: 固定威力ジャンプでは狭い隙間に着地できないため、連続パターンは「1回の長押しジャンプで全部跨げる」長さに収める。`clampPatternSpan` が合計スパンを `maxClearableSpan(speed, height)`（= 高さ height 以上を保てる長押し滞空時間 × speed − プレイヤー幅、低速ほど小さい）以下にブロック間隔を圧縮し、詰めても無理なら single にフォールバックする。これでデフォルト設定でも理論上クリア不能な配置が出ない。`pickPattern` の `clampSpec` 後に必ず通す。
+**連続パターン（double/triple）の間隔も不変条件**: 早離しの小ホップ（後述）があるので、連続パターンは「間に着地して跳び直す（hop-between）」で越える前提。`clampPatternGaps` がブロックの中心間隔を `SPEED.max · clearAirtime + 余裕`（= 1つ越えて着地し次を踏み切るのに足る距離、到達時に速くなっても保証されるよう SPEED.max 基準）以上に**広げる**。各ブロックは `clampSpec` 済みで個別に越えられ、間に着地できる＝常にクリア可能（広げる方向なので fallback 不要）。`pickPattern` の `clampSpec` 後に必ず通す。double/triple は低く細いリズムブロック（高さ22-34）にしてある。
 
 ### 決定論と乱数
 `rng.ts` は xorshift32。`World` と `Collectibles` がこの Rng を共有シードで初期化し、`SEED.daily` のときは日付文字列 (`seedFromString`) から固定シードを作る＝同じ日は同じ地形。
@@ -56,7 +56,7 @@ squash & stretch・トレイル・shake・zoom・パララックスは**描画�
 距離点は倍率込みで積算 (`Scorer.addDistance`)。ニアミスは障害物と水平に重なっている間 `minClear`（プレイヤー下端と障害物上端の最小隙間）を追跡し、通過し終えた瞬間に1回だけ `registerCleared` で採点（`game.ts` の `trackScoring`）。コンボ倍率は**死亡（`reset`）でのみ途切れる**＝攻めて稼ぐ設計。ハイスコア・自己ベスト距離は localStorage (`hop-runner.hiscore` / `hop-runner.bestdist`)。
 
 ### 入力は1つだけ（不変）
-`input.ts` はキー/マウス/タッチを区別せず「押した瞬間 (`takePress`)」と「押し続けているか (`holding`)」の2つだけを公開する。可変ジャンプは `holding` を `player.update` に渡して上昇中の重力を弱めることで実現。`M`（ミュート）・`H`（Tweakpane 開閉）はジャンプキーと衝突しないよう別途登録。**操作のシンプルさ（ジャンプ1入力）は変えない。**
+`input.ts` はキー/マウス/タッチを区別せず「押した瞬間 (`takePress`)」と「押し続けているか (`holding`)」の2つだけを公開する。可変ジャンプは `holding` を `player.update` に渡して実現: **上昇中に早離しすると上向き速度を `PHYSICS.cutVelocity` で頭打ち（＝小ホップ）、押し続けると重力を弱めて高く飛ぶ**。ちょん押し＝小さくきびきび、長押し＝大ジャンプ。これで「ブロックの間で跳ぶ」帯が生まれる（クリア可能性の基準は早離し/float なしの「標準ジャンプ」）。`M`（ミュート）・`H`（Tweakpane 開閉）・`L`（言語）はジャンプキーと衝突しないよう別途登録。**操作のシンプルさ（ジャンプ1入力）は変えない。**
 
 ### 表示テキストは i18n.ts 経由（直書きしない）
 ユーザー向けの文言（Canvas 描画・`index.html` の hint/title）は **`i18n.ts` の `STRINGS` テーブルに足して `t(key)` で引く**。日本語/英語対応で、`navigator.language` で自動判定 + 手動切替（`L` キー / 画面下のトグル）し、選択は localStorage (`hop-runner.locale`) に保存する。Canvas 内テキストは毎フレーム `t()` を読むので切替が即反映、DOM 側は `onLocaleChange` で更新する。`ja` は現状の画面と一致するよう値を据え置く（差分は操作説明の文だけ）。
@@ -64,7 +64,7 @@ squash & stretch・トレイル・shake・zoom・パララックスは**描画�
 - タップ＝ジャンプの入力系から UI を隔離するため、クリックさせたい DOM 要素には `data-no-jump` を付ける（`input.ts` がこの属性配下の `pointerdown` を無視する）。
 
 ### オート（アトラクト / 眺める）モード
-タイトル/ゲームオーバーで `AUTO.attractDelay` 秒無操作だと `beginRun(true)` で自動プレイに入る（`game.ts` の `auto` フラグ）。`autopilot.ts` の `autoInput` が最寄りの未通過障害物に対し、**弧の頂点が障害物の中心に来る**よう踏み切る純関数で、その出力を実入力の代わりに `player.update` へ流す（長押しは使わない＝滞空一定のタップで連続障害物のリズムを保つ）。固定威力のジャンプでは連続ブロックの狭い隙間に着地できず乗り上げる（めり込んで見える）ため、**auto 中は単体障害物のみ生成する**（`world.reset(seed, auto)` → `pickPattern(..., auto=true)` → `AUTO_TABLE`）。**auto 中は当たり判定をスキップ（無敗）し、`endRun` に到達しない＝ハイスコア/自己ベストを保存しない**。何か入力すると `beginRun(false)` で手動ランに引き継ぐ。表示・体験専用で、採点ロジックも地形の決定論（共有 `Rng`）も変えない。
+タイトル/ゲームオーバーで `AUTO.attractDelay` 秒無操作だと `beginRun(true)` で自動プレイに入る（`game.ts` の `auto` フラグ）。`autopilot.ts` の `autoInput` が最寄りの未通過障害物に対し**それを越えられる最小のジャンプ**を出す純関数で、その出力（jump / hold）を実入力の代わりに `player.update` へ流す。低い壁＝小ホップ、高い/広い壁＝大きく（早離しカットを使い、必要 apex に届くまで hold→達したら release）と出し分けて滞空を最小化し、連続のリズムを保つ。auto は単体障害物のみ生成する（`world.reset(seed, auto)` → `pickPattern(..., auto=true)` → `AUTO_TABLE`）ので、空中で狙う対象が切り替わらず無状態で成立する。**auto 中は当たり判定をスキップ（無敗）し、`endRun` に到達しない＝ハイスコア/自己ベストを保存しない**。何か入力すると `beginRun(false)` で手動ランに引き継ぐ。表示・体験専用で、採点ロジックも地形の決定論（共有 `Rng`）も変えない。
 
 ### dev フック
 `import.meta.env.DEV` のときだけ `window.game` に Game インスタンスを公開（手動チューニング・デバッグ用）。本番ビルドには出さない。
