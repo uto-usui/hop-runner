@@ -1,4 +1,5 @@
 import { SCORE } from './config'
+import { t } from './i18n'
 
 export interface Floater {
   x: number
@@ -46,7 +47,7 @@ export class Scorer {
       this.multiplier = Math.min(SCORE.maxMultiplier, 1 + this.combo * SCORE.comboGain)
       const bonus = Math.round(SCORE.nearMissBonus * this.multiplier)
       this.points += bonus
-      this.addFloater(x, y, `NEAR +${bonus}`, '#f5c518')
+      this.addFloater(x, y, `${t('floaterNear')} +${bonus}`, '#f5c518')
     }
     return near
   }
@@ -57,7 +58,7 @@ export class Scorer {
     const meters = Math.round(this.nextMilestone / 10)
     this.nextMilestone += SCORE.milestoneDist
     this.points += SCORE.milestoneBonus
-    this.addFloater(x, y, `${meters}m! +${SCORE.milestoneBonus}`, '#3a6df0')
+    this.addFloater(x, y, `${meters}${t('meterUnit')}! +${SCORE.milestoneBonus}`, '#3a6df0')
     return true
   }
 

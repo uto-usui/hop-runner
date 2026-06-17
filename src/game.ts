@@ -1,5 +1,6 @@
 import { Collectibles } from './collectibles'
 import { GROUND_Y, JUICE, ORB, PARALLAX, SCORE, SEED, SHAKE, SPEED, VFX, VIEW } from './config'
+import { t } from './i18n'
 import { Input } from './input'
 import { Camera } from './juice/camera'
 import { Particles } from './juice/particles'
@@ -314,12 +315,12 @@ export class Game {
     this.drawFloaters()
     this.drawHud()
     if (this.state === 'ready') {
-      this.drawCenterText('HOP RUNNER', 'SPACE / タップ でスタート')
+      this.drawCenterText(t('title'), t('readySub'))
     } else if (this.state === 'gameover') {
       // まず破片の飛散を見せ（deathLinger）、そのあと幕を遅れてフェードインする
       const fadeIn = (this.sinceDeath - JUICE.deathLinger) / JUICE.deathOverlayFade
       const alpha = Math.max(0, Math.min(1, fadeIn))
-      if (alpha > 0) this.drawCenterText('GAME OVER', 'SPACE / タップ でリトライ', alpha)
+      if (alpha > 0) this.drawCenterText(t('gameover'), t('gameoverSub'), alpha)
     }
   }
 
@@ -428,7 +429,7 @@ export class Game {
     ctx.fillStyle = '#f5a623'
     ctx.font = '700 11px system-ui, sans-serif'
     ctx.textAlign = 'center'
-    ctx.fillText('BEST', x, GROUND_Y - 98)
+    ctx.fillText(t('markerBest'), x, GROUND_Y - 98)
     ctx.restore()
   }
 
@@ -506,7 +507,7 @@ export class Game {
     ctx.fillText(this.score.toString().padStart(5, '0'), VIEW.width - 16, 30)
     ctx.fillStyle = this.pal.subText
     ctx.font = '13px system-ui, sans-serif'
-    ctx.fillText(`HI ${this.hiScore.toString().padStart(5, '0')}`, VIEW.width - 16, 50)
+    ctx.fillText(`${t('hudHi')} ${this.hiScore.toString().padStart(5, '0')}`, VIEW.width - 16, 50)
 
     // コンボ倍率（1倍より大きいときだけ、左上に強調表示）
     if (this.scorer.multiplier > 1.001) {
@@ -516,7 +517,7 @@ export class Game {
       ctx.fillText(`x${this.scorer.multiplier.toFixed(2)}`, 16, 32)
       ctx.fillStyle = '#cf9b4e'
       ctx.font = '12px system-ui, sans-serif'
-      ctx.fillText(`NEAR COMBO ${this.scorer.combo}`, 16, 50)
+      ctx.fillText(`${t('hudCombo')} ${this.scorer.combo}`, 16, 50)
     }
 
     // デイリーシード表示（on のときだけ、上部中央）
@@ -524,7 +525,7 @@ export class Game {
       ctx.textAlign = 'center'
       ctx.fillStyle = this.pal.subText
       ctx.font = '11px system-ui, sans-serif'
-      ctx.fillText(`DAILY ${this.dailyDate}`, VIEW.width / 2, 20)
+      ctx.fillText(`${t('hudDaily')} ${this.dailyDate}`, VIEW.width / 2, 20)
     }
   }
 
