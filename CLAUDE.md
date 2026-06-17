@@ -61,5 +61,8 @@ squash & stretch・トレイル・shake・zoom・パララックスは**描画�
 - これは**表示専用**で、当たり判定・採点・地形/オーブの決定論（共有 `Rng`）には一切関与しない（`navigator.language`/localStorage はシードに使わない）。
 - タップ＝ジャンプの入力系から UI を隔離するため、クリックさせたい DOM 要素には `data-no-jump` を付ける（`input.ts` がこの属性配下の `pointerdown` を無視する）。
 
+### オート（アトラクト / 眺める）モード
+タイトル/ゲームオーバーで `AUTO.attractDelay` 秒無操作だと `beginRun(true)` で自動プレイに入る（`game.ts` の `auto` フラグ）。`autopilot.ts` の `autoInput` が最寄りの未通過障害物に対しクリア可能エンベロープ前提で跳ぶ純関数で、その出力を実入力の代わりに `player.update` へ流す。**auto 中は当たり判定をスキップ（無敗）し、`endRun` に到達しない＝ハイスコア/自己ベストを保存しない**。何か入力すると `beginRun(false)` で手動ランに引き継ぐ。表示・体験専用で、採点ロジックも地形の決定論（共有 `Rng`）も変えない。
+
 ### dev フック
 `import.meta.env.DEV` のときだけ `window.game` に Game インスタンスを公開（手動チューニング・デバッグ用）。本番ビルドには出さない。
