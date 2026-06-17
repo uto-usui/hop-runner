@@ -45,6 +45,7 @@ squash & stretch・トレイル・shake・zoom・パララックスは**描画�
 
 ### クリア可能エンベロープ（理不尽を出さない不変条件）
 `patterns.ts` は現在の `PHYSICS`/`speed` から「タップジャンプで越えられる最大の高さ・幅」(`maxClearableHeight`/`maxClearableWidth`) を算出し、全 SpawnSpec を `clampSpec` で必ずその範囲に収める。難易度は距離 `p=distance/difficultyRampDist` による重み付き抽選（`TABLE`）でパターン種別が変わるだけで、個々の障害物は常に越えられる。**新しいパターンビルダーを足すときも必ず `clampSpec` を通す。**
+**サイズだけでなく「間隔×速度」も不変条件**: 連続障害物を着地→再ジャンプで越えるには間隔が滞空時間ぶん必要なので、`maxClearableSpeed()`(= `OBSTACLE.minGap / tapAirtime`) を算出し、`world` が実速度を `min(SPEED.max, maxClearableSpeed())` にクランプする。これを超えると高速域で間隔が詰まり腕に関係なく避けられない＝運ゲーになるため。`SPEED.max` や `OBSTACLE.minGap` を変えるとこの上限も連動する。
 
 ### 決定論と乱数
 `rng.ts` は xorshift32。`World` と `Collectibles` がこの Rng を共有シードで初期化し、`SEED.daily` のときは日付文字列 (`seedFromString`) から固定シードを作る＝同じ日は同じ地形。
@@ -62,7 +63,7 @@ squash & stretch・トレイル・shake・zoom・パララックスは**描画�
 - タップ＝ジャンプの入力系から UI を隔離するため、クリックさせたい DOM 要素には `data-no-jump` を付ける（`input.ts` がこの属性配下の `pointerdown` を無視する）。
 
 ### オート（アトラクト / 眺める）モード
-タイトル/ゲームオーバーで `AUTO.attractDelay` 秒無操作だと `beginRun(true)` で自動プレイに入る（`game.ts` の `auto` フラグ）。`autopilot.ts` の `autoInput` が最寄りの未通過障害物に対し、**弧の頂点が障害物の中心に来る**よう踏み切る純関数で、その出力を実入力の代わりに `player.update` へ流す。固定威力のジャンプでは連続ブロックの狭い隙間に着地できず乗り上げる（めり込んで見える）ため、**auto 中は単体障害物のみ生成する**（`world.reset(seed, auto)` → `pickPattern(..., auto=true)` → `AUTO_TABLE`）。**auto 中は当たり判定をスキップ（無敗）し、`endRun` に到達しない＝ハイスコア/自己ベストを保存しない**。何か入力すると `beginRun(false)` で手動ランに引き継ぐ。表示・体験専用で、採点ロジックも地形の決定論（共有 `Rng`）も変えない。
+タイトル/ゲームオーバーで `AUTO.attractDelay` 秒無操作だと `beginRun(true)` で自動プレイに入る（`game.ts` の `auto` フラグ）。`autopilot.ts` の `autoInput` が最寄りの未通過障害物に対し、**弧の頂点が障害物の中心に来る**よう踏み切る純関数で、その出力を実入力の代わりに `player.update` へ流す（長押しは使わない＝滞空一定のタップで連続障害物のリズムを保つ）。固定威力のジャンプでは連続ブロックの狭い隙間に着地できず乗り上げる（めり込んで見える）ため、**auto 中は単体障害物のみ生成する**（`world.reset(seed, auto)` → `pickPattern(..., auto=true)` → `AUTO_TABLE`）。**auto 中は当たり判定をスキップ（無敗）し、`endRun` に到達しない＝ハイスコア/自己ベストを保存しない**。何か入力すると `beginRun(false)` で手動ランに引き継ぐ。表示・体験専用で、採点ロジックも地形の決定論（共有 `Rng`）も変えない。
 
 ### dev フック
 `import.meta.env.DEV` のときだけ `window.game` に Game インスタンスを公開（手動チューニング・デバッグ用）。本番ビルドには出さない。

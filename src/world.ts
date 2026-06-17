@@ -1,5 +1,5 @@
 import { OBSTACLE, SPEED, VIEW } from './config'
-import { pickPattern, type ObstacleKind } from './patterns'
+import { maxClearableSpeed, pickPattern, type ObstacleKind } from './patterns'
 import { Rng } from './rng'
 
 export interface Obstacle {
@@ -30,7 +30,8 @@ export class World {
   }
 
   update(dt: number) {
-    this.speed = Math.min(SPEED.max, this.speed + SPEED.accel * dt)
+    // 実速度は SPEED.max と「連続障害物をクリアできる上限」の小さい方でクランプする。
+    this.speed = Math.min(SPEED.max, maxClearableSpeed(), this.speed + SPEED.accel * dt)
     const move = this.speed * dt
     this.distance += move
 

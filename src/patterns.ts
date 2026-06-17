@@ -1,4 +1,4 @@
-import { PATTERN, PHYSICS } from './config'
+import { OBSTACLE, PATTERN, PHYSICS } from './config'
 import { Rng } from './rng'
 
 export type ObstacleKind = 'block' | 'low' | 'tall'
@@ -29,6 +29,14 @@ export function maxClearableHeight(): number {
 
 export function maxClearableWidth(speed: number): number {
   return speed * tapAirtime() * PATTERN.safetyWidthRatio
+}
+
+// 連続した障害物を「着地して跳び直す」で越えるには、障害物どうしの間隔が
+// 少なくとも 1 ジャンプの滞空時間ぶん（速度×滞空時間）必要。逆に解くと、最小間隔
+// minGap で詰めて並んでも越えられる最大速度は minGap / 滞空時間。これを超えると
+// 高速域で間隔が詰まり、腕に関係なく避けられない＝運ゲーになる。world が実速度をこれにクランプする。
+export function maxClearableSpeed(): number {
+  return OBSTACLE.minGap / tapAirtime()
 }
 
 function clampSpec(spec: SpawnSpec, speed: number): SpawnSpec {

@@ -26,7 +26,9 @@ export const PHYSICS = {
 
 export const SPEED = {
   start: 250, // px/s 初期スクロール速度（次のランから反映）
-  max: 600, // px/s 最高速
+  // px/s 最高速。実速度は world で maxClearableSpeed()（= minGap / 滞空時間）とも min を取る。
+  // この値を上げても、間隔的に着地→再ジャンプが間に合う上限を超えては加速しない。
+  max: 480,
   accel: 5, // px/s 1秒あたりに増える速度（難易度の上がり方）
 }
 
@@ -92,7 +94,7 @@ export const SCORE = {
 
 // 障害物パターン生成。可変ジャンプ（高さ/距離の出し分け）の習熟を要求する地形を作る。
 export const PATTERN = {
-  safetyHeightRatio: 0.85, // タップジャンプ最高到達点に対する、許容する最大障害物高さの比
+  safetyHeightRatio: 0.8, // タップジャンプ最高到達点に対する、許容する最大障害物高さの比（連続でも越せる余裕を残す）
   safetyWidthRatio: 0.5, // 滞空中に進める距離に対する、許容する最大障害物幅の比
   landingBufferPx: 80, // 連続障害物の間に必要な着地猶予（px）
   difficultyRampDist: 7000, // この距離で難易度の重みが後半カーブへ移行
@@ -144,6 +146,4 @@ export const SEED = {
 export const AUTO = {
   attractDelay: 6, // s 無操作がこの秒数続くと自動プレイ開始
   leadBias: 1.0, // 踏み切りタイミングの補正。1=弧の頂点が障害物の中心に重なる（大きいほど早め）
-  tallThreshold: 44, // px これ以上高い障害物は長押しで余裕を持って越える
-  wideThreshold: 48, // px これ以上広い障害物も長押しで滞空を伸ばす
 }
