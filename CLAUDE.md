@@ -24,7 +24,7 @@ pnpm typecheck  # tsc --noEmit（型チェックのみ）
 
 ### Game が唯一のオーケストレータ、他はほぼ純粋なシミュレーション
 `game.ts`（最大のファイル）が requestAnimationFrame ループ・状態機械・当たり判定・採点の配線・**全描画**を持つ。
-他モジュールは状態を持つが描画しない: `player`（可変ジャンプ物理）/ `world`（地面スクロール＋障害物列）/ `patterns`（障害物形状の生成）/ `score`（スコア・コンボ）/ `collectibles`（オーブ）/ `theme`（配色補間）/ `rng`。`juice/`（`camera`・`particles`・`audio`）は手触り演出。新しい描画は基本 `game.ts` の `draw*` 群に足す。
+他モジュールは状態を持つが描画しない: `player`（可変ジャンプ物理）/ `world`（地面スクロール＋障害物列）/ `patterns`（障害物形状の生成）/ `score`（スコア・コンボ）/ `collectibles`（オーブ）/ `theme`（配色補間）/ `rng` / `i18n`（表示テキストの単一の出所）。`juice/`（`camera`・`particles`・`audio`）は手触り演出。新しい描画は基本 `game.ts` の `draw*` 群に足す。
 
 ### 2つの時計（最重要の不変条件）
 ループには通常の `dt` とは別に演出用の時間レイヤーがある。混同すると挙動が壊れる:
@@ -55,6 +55,11 @@ squash & stretch・トレイル・shake・zoom・パララックスは**描画�
 
 ### 入力は1つだけ（不変）
 `input.ts` はキー/マウス/タッチを区別せず「押した瞬間 (`takePress`)」と「押し続けているか (`holding`)」の2つだけを公開する。可変ジャンプは `holding` を `player.update` に渡して上昇中の重力を弱めることで実現。`M`（ミュート）・`H`（Tweakpane 開閉）はジャンプキーと衝突しないよう別途登録。**操作のシンプルさ（ジャンプ1入力）は変えない。**
+
+### 表示テキストは i18n.ts 経由（直書きしない）
+ユーザー向けの文言（Canvas 描画・`index.html` の hint/title）は **`i18n.ts` の `STRINGS` テーブルに足して `t(key)` で引く**。日本語/英語対応で、`navigator.language` で自動判定 + 手動切替（`L` キー / 画面下のトグル）し、選択は localStorage (`hop-runner.locale`) に保存する。Canvas 内テキストは毎フレーム `t()` を読むので切替が即反映、DOM 側は `onLocaleChange` で更新する。`ja` は現状の画面と一致するよう値を据え置く（差分は操作説明の文だけ）。
+- これは**表示専用**で、当たり判定・採点・地形/オーブの決定論（共有 `Rng`）には一切関与しない（`navigator.language`/localStorage はシードに使わない）。
+- タップ＝ジャンプの入力系から UI を隔離するため、クリックさせたい DOM 要素には `data-no-jump` を付ける（`input.ts` がこの属性配下の `pointerdown` を無視する）。
 
 ### dev フック
 `import.meta.env.DEV` のときだけ `window.game` に Game インスタンスを公開（手動チューニング・デバッグ用）。本番ビルドには出さない。
