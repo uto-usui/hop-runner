@@ -16,11 +16,13 @@ export class World {
   obstacles: Obstacle[] = []
   distance = 0 // 走った総距離（px）。スコアの元になる
   private nextGap = 0 // 次のパターンまでの残り距離
+  private auto = false // オート（眺める）モードか。true なら単体障害物のみ生成する
   // シードを渡さなければランダム（従来挙動）。デイリーシードはここに seed を渡す。
   private rng = new Rng()
 
-  reset(seed?: number) {
+  reset(seed?: number, auto = false) {
     this.rng = new Rng(seed)
+    this.auto = auto
     this.speed = SPEED.start
     this.obstacles = []
     this.distance = 0
@@ -41,7 +43,7 @@ export class World {
 
   // 距離に応じた「パターン」を1つぶんまとめて出す。間隔も含めて次の nextGap を決める。
   private spawn() {
-    const specs = pickPattern(this.distance, this.speed, this.rng)
+    const specs = pickPattern(this.distance, this.speed, this.rng, this.auto)
     let patternRight = 0
     for (const s of specs) {
       this.obstacles.push({

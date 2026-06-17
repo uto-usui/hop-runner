@@ -81,7 +81,7 @@ export function setupTweakPanel() {
 
   const auto = pane.addFolder({ title: 'オート（眺める）', expanded: false })
   auto.addBinding(AUTO, 'attractDelay', { label: '放置で自動(s)', min: 2, max: 30, step: 1 })
-  auto.addBinding(AUTO, 'leadTime', { label: '踏み切りの早さ(s)', min: 0.15, max: 0.5, step: 0.01 })
+  auto.addBinding(AUTO, 'leadBias', { label: '踏み切り補正', min: 0.6, max: 1.6, step: 0.05 })
 
   pane.addBlade({ view: 'separator' })
   pane.addButton({ title: 'デフォルトに戻す' }).on('click', () => {

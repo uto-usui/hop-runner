@@ -103,17 +103,28 @@ const TABLE: Weighted[] = [
   { build: triple, weight: (p) => Math.max(0, p - 0.45) * 1.2 },
 ]
 
-/** 距離に応じて重み付きでパターンを選び、安全な SpawnSpec[] を返す */
-export function pickPattern(distance: number, speed: number, rng: Rng): SpawnSpec[] {
+// オート（眺める）モード用: 単体障害物のみ。固定威力のジャンプ（最低でも apex 117px /
+// 滞空 0.6s）では連続ブロックの狭い隙間に着地できず弧が次のブロックに乗り上げるため、
+// 自動プレイでは double / triple を出さない。単体は全速度でクリーンに越えられる。
+const AUTO_TABLE: Weighted[] = [
+  { build: single, weight: () => 1.0 },
+  { build: low, weight: () => 0.6 },
+  { build: tall, weight: () => 0.6 },
+]
+
+/** 距離に応じて重み付きでパターンを選び、安全な SpawnSpec[] を返す。
+ *  auto=true（眺めるモード）では単体のみの AUTO_TABLE を使う。 */
+export function pickPattern(distance: number, speed: number, rng: Rng, auto = false): SpawnSpec[] {
+  const table = auto ? AUTO_TABLE : TABLE
   const p = Math.min(1, distance / PATTERN.difficultyRampDist)
-  const weights = TABLE.map((w) => Math.max(0, w.weight(p)))
+  const weights = table.map((w) => Math.max(0, w.weight(p)))
   const sum = weights.reduce((a, b) => a + b, 0)
   let r = rng.next() * sum
-  let chosen = TABLE[0]!
-  for (let i = 0; i < TABLE.length; i++) {
+  let chosen = table[0]!
+  for (let i = 0; i < table.length; i++) {
     r -= weights[i]!
     if (r <= 0) {
-      chosen = TABLE[i]!
+      chosen = table[i]!
       break
     }
   }

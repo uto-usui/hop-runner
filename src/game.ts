@@ -246,7 +246,7 @@ export class Game {
     // デイリーシード on なら当日固定の地形、off なら毎回ランダム
     const seed = SEED.daily ? seedFromString(this.dailyDate) : undefined
     this.player.reset()
-    this.world.reset(seed)
+    this.world.reset(seed, auto)
     this.collectibles.reset(seed)
     this.camera.reset()
     this.particles.clear()
