@@ -11,24 +11,26 @@ export interface SpawnSpec {
 }
 
 // --- クリア可能エンベロープ（現在の PHYSICS / speed から算出） ---
-// 「最低でもタップジャンプで越えられる」ことを保証し、理不尽な壁を出さない。
+// 「標準ジャンプで越えられる」ことを保証し、理不尽な壁を出さない。
+// 基準は jumpVelocity 由来の「標準ジャンプ」（早離しカットも長押しfloatもしない素のジャンプ）。
+// 早離しの小ホップ（cutVelocity 由来）はこれより小さいので基準にしない。
 
-/** タップ（押しっぱなしなし）ジャンプの最高到達点(px) */
-function tapApex(): number {
+/** 標準ジャンプの最高到達点(px)。jumpVelocity 由来＝早離し/floatなしの素の山 */
+function standardApex(): number {
   return (PHYSICS.jumpVelocity * PHYSICS.jumpVelocity) / (2 * PHYSICS.gravity)
 }
 
-/** タップジャンプの滞空時間(s) */
-function tapAirtime(): number {
+/** 標準ジャンプの滞空時間(s) */
+function standardAirtime(): number {
   return (2 * PHYSICS.jumpVelocity) / PHYSICS.gravity
 }
 
 export function maxClearableHeight(): number {
-  return tapApex() * PATTERN.safetyHeightRatio
+  return standardApex() * PATTERN.safetyHeightRatio
 }
 
 export function maxClearableWidth(speed: number): number {
-  return speed * tapAirtime() * PATTERN.safetyWidthRatio
+  return speed * standardAirtime() * PATTERN.safetyWidthRatio
 }
 
 // 連続した障害物を「着地して跳び直す」で越えるには、障害物どうしの間隔が
@@ -36,7 +38,7 @@ export function maxClearableWidth(speed: number): number {
 // minGap で詰めて並んでも越えられる最大速度は minGap / 滞空時間。これを超えると
 // 高速域で間隔が詰まり、腕に関係なく避けられない＝運ゲーになる。world が実速度をこれにクランプする。
 export function maxClearableSpeed(): number {
-  return OBSTACLE.minGap / tapAirtime()
+  return OBSTACLE.minGap / standardAirtime()
 }
 
 // --- 連続パターンの「1ジャンプ越え」保証（方針A） ---
