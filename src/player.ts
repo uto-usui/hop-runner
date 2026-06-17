@@ -56,6 +56,12 @@ export class Player {
     this.justLanded = false
 
     if (!this.grounded) {
+      // 早離しジャンプカット: 上昇中にボタンを離したら上向き速度を頭打ちにする＝小ホップ。
+      // ちょん押し＝低くきびきび、押し続け＝高く。これで「ブロックの間で跳ぶ」帯が生まれる。
+      if (this.vy < 0 && !holding && this.vy < -PHYSICS.cutVelocity) {
+        this.vy = -PHYSICS.cutVelocity
+      }
+
       // 可変ジャンプ: 上昇中かつボタンを押し続けている間（最大 maxHoldTime まで）は
       // 重力を弱め、ふわっと高く・長く飛ばす。離す/上限到達/落下開始で通常重力に戻る。
       const ascendingAndHeld =

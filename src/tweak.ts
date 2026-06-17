@@ -33,6 +33,7 @@ export function setupTweakPanel() {
   jump.addBinding(PHYSICS, 'jumpVelocity', { label: 'jumpVel', min: 400, max: 1200, step: 10 })
   jump.addBinding(PHYSICS, 'holdGravityScale', { label: 'holdScale', min: 0, max: 1, step: 0.01 })
   jump.addBinding(PHYSICS, 'maxHoldTime', { label: 'maxHold', min: 0, max: 0.6, step: 0.01 })
+  jump.addBinding(PHYSICS, 'cutVelocity', { label: '小ホップ初速', min: 200, max: 700, step: 10 })
 
   const speed = pane.addFolder({ title: 'スピード' })
   speed.addBinding(SPEED, 'start', { min: 150, max: 700, step: 10 })

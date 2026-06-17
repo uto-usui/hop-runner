@@ -22,6 +22,9 @@ export const PHYSICS = {
   jumpVelocity: 780, // px/s ジャンプ開始時の上向き初速
   holdGravityScale: 0.42, // 上昇中に押し続けている間の重力倍率（小さいほど高く飛べる）
   maxHoldTime: 0.22, // s この時間を超えると長押しの効果は切れる
+  // 早離しジャンプカット: 上昇中に離すと上向き速度をこの値で頭打ち＝小ホップ。
+  // apex ≈ cutVelocity^2/(2*gravity) ≈ 25px、滞空 ≈ 2*cutVelocity/gravity ≈ 0.28s。
+  cutVelocity: 360,
 }
 
 export const SPEED = {
