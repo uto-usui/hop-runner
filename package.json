@@ -15,7 +15,7 @@
     "@tweakpane/core": "2.0.5",
     "lefthook": "^2.2.2",
     "typescript": "^7.0.2",
-    "vite": "^8.3.5"
+    "vite": "^8.3.6"
   },
   "dependencies": {
     "tweakpane": "^4.0.5"
